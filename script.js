@@ -24,6 +24,22 @@ async function fetchPokemonList() {
     }
 }
 
+// Fetch type relationship data
+async function fetchDataType(typeName) {
+    try {
+        const response = await fetch(`https://pokeapi.co/api/v2/type/${typeName}`);
+        const data = await response.json();
+        return {
+            strengths: data.damage_relations.double_damage_to.map((type) => type.name),
+            weaknesses: data.damage_relations.double_damage_from.map((type) => type.name),
+            immunities: data.damage_relations.no_damage_from.map((type) => type.name),
+        };
+    } catch (error) {
+        console.error(`Error fetching type data for ${typeName}:`, error);
+        return { strengths: [], weaknesses: [], immunities: [] };
+    }
+}
+
 // Display Pokémon cards
 function displayPokemon(pokemonArray) {
     pokemonList.innerHTML = ""; // Clear existing content
@@ -59,9 +75,32 @@ function displayPokemon(pokemonArray) {
 }
 
 // View Pokémon details
-function viewPokemonDetails(pokemon) {
+async function viewPokemonDetails(pokemon) {
     const modal = document.createElement("div");
     modal.classList.add("pokemon-modal");
+
+    // Fetch type relationship data for each type
+    const typeData = await Promise.all(
+        pokemon.types.map(async (typeInfo) => {
+            return {
+                type: typeInfo.type.name,
+                relationships: await fetchDataType(typeInfo.type.name),
+            };
+        })
+    );
+
+    // Generate type relationship content
+    const typeContent = typeData
+        .map(
+            (type) =>
+        <div>
+            <h4>${type.type}</h4>
+            <p><strong>Strengths:</strong> ${type.relationships.strengths.join(", ") || "None"}</p>
+            <p><strong>Weaknesses:</strong> ${type.relationships.weaknesses.join(", ") || "None"}</p>
+            <p><strong>Immunities:</strong> ${type.relationships.immunities.join(", ") || "None"}</p>
+        </div>
+        )
+        .join("");
 
     modal.innerHTML = `
         <div class="modal-content">
@@ -72,6 +111,10 @@ function viewPokemonDetails(pokemon) {
             <p><strong>Height:</strong> ${pokemon.height}</p>
             <p><strong>Weight:</strong> ${pokemon.weight}</p>
             <p><strong>Abilities:</strong> ${pokemon.abilities.map((ability) => ability.ability.name).join(", ")}</p>
+            <div>
+            <h3>Type Relationships:</h3>
+            ${typeContent}
+            </div>
         </div>
     `;
 
