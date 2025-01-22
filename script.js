@@ -92,13 +92,14 @@ async function viewPokemonDetails(pokemon) {
     // Generate type relationship content
     const typeContent = typeData
         .map(
-            (type) =>
+            (type) => `
         <div>
             <h4>${type.type}</h4>
             <p><strong>Strengths:</strong> ${type.relationships.strengths.join(", ") || "None"}</p>
             <p><strong>Weaknesses:</strong> ${type.relationships.weaknesses.join(", ") || "None"}</p>
             <p><strong>Immunities:</strong> ${type.relationships.immunities.join(", ") || "None"}</p>
         </div>
+        `
         )
         .join("");
 
